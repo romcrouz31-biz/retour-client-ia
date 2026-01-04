@@ -1,0 +1,61 @@
+import OpenAI from "openai";
+
+const ALLOWED_MODELS = ["gpt-4o-mini", "gpt-4o"];
+
+export async function POST(req) {
+  try {
+    const { apiKey, model, clientMessage } = await req.json();
+
+    // 🔐 Vérifications de base
+    if (!apiKey || !clientMessage) {
+      return Response.json(
+        { error: "Clé API ou message manquant" },
+        { status: 400 }
+      );
+    }
+
+    const selectedModel = ALLOWED_MODELS.includes(model)
+      ? model
+      : "gpt-4o-mini";
+
+    const openai = new OpenAI({
+      apiKey: apiKey,
+    });
+
+    const response = await openai.chat.completions.create({
+      model: selectedModel,
+      messages: [
+        {
+          role: "system",
+          content: `
+Tu es un assistant professionnel spécialisé dans l'analyse de retours clients.
+
+Tu dois répondre STRICTEMENT avec cette structure :
+- Type de retour
+- Priorité (Faible / Moyenne / Haute)
+- Résumé (2 lignes max)
+- Réponse professionnelle prête à envoyer
+          `,
+        },
+        {
+          role: "user",
+          content: clientMessage,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 800, // ✅ BIEN PLACÉ
+    });
+
+    return Response.json({
+      result: response.choices[0].message.content,
+      modelUsed: selectedModel,
+    });
+  } catch (error) {
+    console.error("OpenAI error:", error);
+
+    return Response.json(
+      { error: "Erreur lors de l'analyse du message" },
+      { status: 500 }
+    );
+  }
+}
