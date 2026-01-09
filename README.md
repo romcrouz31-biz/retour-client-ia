@@ -113,3 +113,4 @@ L'application sera accessible à l'adresse : [http://localhost:3000](http://loca
 ## 📄 Licence
 
 MIT
+# freelance-assistant-dev-v1
